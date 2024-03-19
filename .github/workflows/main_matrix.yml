@@ -19,6 +19,8 @@ on:
 
   workflow_dispatch:
 
+permissions: read-all
+
 jobs:
   check:
     strategy:
@@ -145,14 +147,14 @@ jobs:
     with:
       board: ${{ matrix.board }}
 
-  build-raspbian:
-    strategy:
-      fail-fast: false
-      max-parallel: 1
-    uses: ./.github/workflows/build_raspbian.yml
+  # build-raspbian:
+  #   strategy:
+  #     fail-fast: false
+  #     max-parallel: 1
+  #   uses: ./.github/workflows/build_raspbian.yml
 
-  package-raspbian:
-    uses: ./.github/workflows/package_raspbian.yml
+  # package-raspbian:
+  #   uses: ./.github/workflows/package_raspbian.yml
 
   build-native:
     runs-on: ubuntu-latest
@@ -231,16 +233,15 @@ jobs:
       contents: write
       pull-requests: write
     runs-on: ubuntu-latest
-    needs:
-      [
+    needs: [
         build-esp32,
         build-esp32-s3,
         build-esp32-c3,
         build-nrf52,
-        build-raspbian,
+        # build-raspbian,
         build-native,
         build-rpi2040,
-        package-raspbian,
+        # package-raspbian,
       ]
     steps:
       - name: Checkout code
@@ -260,8 +261,11 @@ jobs:
         run: echo "version=$(./bin/buildinfo.py long)" >> $GITHUB_OUTPUT
         id: version
 
+      # - name: Move files up
+      #   run: mv -b -t ./ ./*tbeam-2*/littlefs*.bin ./*tbeam-2*/bleota.bin ./*tbeam-s3*/bleota-s3.bin ./*esp32c3*/bleota-c3.bin ./**/firmware*.bin ./*t-echo*/Meshtastic_nRF52_factory_erase_v2.uf2 ./**/firmware-*.uf2 ./**/firmware-*-ota.zip ./**/*.elf ./*native*/*device-*.sh ./*native*/*device-*.bat ./firmware-raspbian-*/release/meshtasticd_linux_aarch64 ./firmware-raspbian-*/bin/config-dist.yaml
+
       - name: Move files up
-        run: mv -b -t ./ ./*tbeam-2*/littlefs*.bin ./*tbeam-2*/bleota.bin ./*tbeam-s3*/bleota-s3.bin ./*esp32c3*/bleota-c3.bin ./**/firmware*.bin ./*t-echo*/Meshtastic_nRF52_factory_erase_v2.uf2 ./**/firmware-*.uf2 ./**/firmware-*-ota.zip ./**/*.elf ./*native*/*device-*.sh ./*native*/*device-*.bat ./firmware-raspbian-*/release/meshtasticd_linux_aarch64 ./firmware-raspbian-*/bin/config-dist.yaml
+        run: mv -b -t ./ ./*tbeam-2*/littlefs*.bin ./*tbeam-2*/bleota.bin ./*tbeam-s3*/bleota-s3.bin ./*esp32c3*/bleota-c3.bin ./**/firmware*.bin ./*t-echo*/Meshtastic_nRF52_factory_erase_v2.uf2 ./**/firmware-*.uf2 ./**/firmware-*-ota.zip ./**/*.elf ./*native*/*device-*.sh ./*native*/*device-*.bat
 
       - name: Repackage in single firmware zip
         uses: actions/upload-artifact@v3
@@ -395,15 +399,15 @@ jobs:
           asset_name: debug-elfs-${{ steps.version.outputs.version }}.zip
           asset_content_type: application/zip
 
-      - name: Add raspbian .deb
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ github.token }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./meshtasticd_${{ steps.version.outputs.version }}_arm64.deb
-          asset_name: meshtasticd_${{ steps.version.outputs.version }}_arm64.deb
-          asset_content_type: application/vnd.debian.binary-package
+      # - name: Add raspbian .deb
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ github.token }}
+      #   with:
+      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #     asset_path: ./meshtasticd_${{ steps.version.outputs.version }}_arm64.deb
+      #     asset_name: meshtasticd_${{ steps.version.outputs.version }}_arm64.deb
+      #     asset_content_type: application/vnd.debian.binary-package
 
       - name: Bump version.properties
         run: >-
